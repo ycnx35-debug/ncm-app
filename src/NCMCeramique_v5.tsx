@@ -307,17 +307,67 @@ export default function App(){
   const [editLinks,setEditLinks]=useState(links);
   const [profDisplay,setProfDisplay]=useState("");
 
-  const pTiles=useCallback((v:Tile[])=>{setTiles(v);safeStorage.set("ncm_tiles",v);},[]);
-  const pFormats=useCallback((v:string[])=>{setFormats(v);safeStorage.set("ncm_formats",v);},[]);
-  const pCategories=useCallback((v:string[])=>{setCategories(v);safeStorage.set("ncm_categories",v);},[]);
-  const pLinks=useCallback((v:typeof DEFAULT_LINKS)=>{setLinks(v);safeStorage.set("ncm_links",v);},[]);
-  const pAccounts=useCallback((v:Account[])=>{setAccounts(v);safeStorage.set("ncm_accounts",v);},[]);
+  const pFormats = async (v:string[]) => {
+  setFormats(v);
 
-  useEffect(()=>{safeStorage.set("ncm_dark",dark);},[dark]);
-  useEffect(()=>{safeStorage.set("ncm_lang",lang);},[lang]);
-  useEffect(() => {
+  await supabase
+    .from("settings")
+    .update({ value: v })
+    .eq("key","formats");
+};
+
+const pCategories = async (v:string[]) => {
+  setCategories(v);
+
+  await supabase
+    .from("settings")
+    .update({ value: v })
+    .eq("key","categories");
+};
+
+const pLinks = async (v:any) => {
+  setLinks(v);
+
+  await supabase
+    .from("settings")
+    .update({ value: v })
+    .eq("key","links");
+};
+ const pAccounts=useCallback((v:Account[])=>{setAccounts(v);safeStorage.set("ncm_accounts",v);},[]);
+
+const fetchTiles = async () => {
+  const { data, error } = await supabase
+    .from("tiles")
+    .select("*");
+
+  if (!error && data) {
+    setTiles(data);
+  }
+};
+
+const fetchSettings = async () => {
+  const { data } = await supabase
+    .from("settings")
+    .select("*");
+
+  if(data){
+    const formatsData = data.find((x:any)=>x.key==="formats");
+    const categoriesData = data.find((x:any)=>x.key==="categories");
+    const linksData = data.find((x:any)=>x.key==="links");
+
+    if(formatsData) setFormats(formatsData.value);
+    if(categoriesData) setCategories(categoriesData.value);
+    if(linksData) setLinks(linksData.value);
+  }
+};
+
+useEffect(()=>{safeStorage.set("ncm_dark",dark);},[dark]);
+useEffect(()=>{safeStorage.set("ncm_lang",lang);},[lang]);
+
+useEffect(() => {
   fetchTiles();
- }, []);
+  fetchSettings();
+}, []);
   const bg=dark?"bg-black":"bg-gray-50";
   const hdr=dark?"bg-black/95 border-zinc-800":"bg-white/95 border-gray-200";
   const cardCls=dark?"bg-zinc-950 border-zinc-800":"bg-white border-gray-200";
@@ -348,14 +398,38 @@ export default function App(){
 
   const handleLogout=()=>{setCurrentUser(null);setDrawer(false);};
 
-  const handleAddTile=useCallback(()=>{
-    if(!form.name.trim()||form.images.length===0){setFormError(t.fillAll);return;}
-    setFormError("");
-    pTiles([{id:Date.now(),name:form.name.trim(),category:form.category,format:form.format,description:form.description.trim(),images:form.images},...tiles]);
-    setForm({name:"",category:categories[0]||"",format:formats[0]||"",description:"",images:[]});
-    setScreen(SCREENS.MENU);
-  },[form,tiles,categories,formats,t,pTiles]);
+  const handleAddTile = async () => {
+  if(!form.name.trim() || form.images.length===0){
+    setFormError(t.fillAll);
+    return;
+  }
 
+  setFormError("");
+
+  const { error } = await supabase
+    .from("tiles")
+    .insert([{
+      name: form.name.trim(),
+      category: form.category,
+      format: form.format,
+      description: form.description.trim(),
+      images: form.images
+    }]);
+
+  if(!error){
+    fetchTiles();
+
+    setForm({
+      name:"",
+      category:categories[0]||"",
+      format:formats[0]||"",
+      description:"",
+      images:[]
+    });
+
+    setScreen(SCREENS.MENU);
+  }
+};
   const handleSaveEdit=useCallback(()=>{
     if(!editingTile?.name.trim())return;
     const u:Tile={...editingTile,images:editingTile.images||(editingTile.image?[editingTile.image]:[])};
@@ -363,7 +437,14 @@ export default function App(){
     setEditingTile(null);setScreen(SCREENS.TILES);
   },[editingTile,tiles,pTiles]);
 
-  const deleteTile=useCallback((id:number)=>pTiles(tiles.filter(tile=>tile.id!==id)),[tiles,pTiles]);
+  const deleteTile = async (id:number) => {
+  await supabase
+    .from("tiles")
+    .delete()
+    .eq("id", id);
+
+  fetchTiles();
+};
   const toggleFav=useCallback((id:number)=>setFavorites((p:number[])=>p.includes(id)?p.filter((f:number)=>f!==id):[...p,id]),[]);
 
   const filtered=useMemo(()=>tiles.filter((tile:Tile)=>{
