@@ -527,8 +527,23 @@ export default function App(){
       </div>
     );
 
-    if(screen===SCREENS.FORMATS) return<ListManager title={t.manageFormats} items={formats} onSave={pFormats} onBack={()=>setScreen(SCREENS.MENU)} placeholder={t.formatPlaceholder}/>;
-    if(screen===SCREENS.CATEGORIES) return<ListManager title={t.manageCategories} items={categories} onSave={pCategories} onBack={()=>setScreen(SCREENS.MENU)} placeholder={t.catPlaceholder}/>;
+    if(screen===SCREENS.FORMATS) return<ListManager title={t.manageFormats} items={formats} onSave={async(v)=>{
+  setFormats(v);
+
+  await supabase
+    .from("settings")
+    .update({ value: v })
+    .eq("key","formats");
+}} onBack={()=>setScreen(SCREENS.MENU)} placeholder={t.formatPlaceholder}/>;
+
+if(screen===SCREENS.CATEGORIES) return<ListManager title={t.manageCategories} items={categories} onSave={async(v)=>{
+  setCategories(v);
+
+  await supabase
+    .from("settings")
+    .update({ value: v })
+    .eq("key","categories");
+}} onBack={()=>setScreen(SCREENS.MENU)} placeholder={t.catPlaceholder}/>;
 
     if(screen===SCREENS.LINKS) return(
       <div className="p-6 space-y-4">
