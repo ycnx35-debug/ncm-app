@@ -420,12 +420,31 @@ useEffect(() => {
     setScreen(SCREENS.MENU);
   }
 };
-  const handleSaveEdit=useCallback(()=>{
-    if(!editingTile?.name.trim())return;
-    const u:Tile={...editingTile,images:editingTile.images||(editingTile.image?[editingTile.image]:[])};
-    pTiles(tiles.map(tile=>tile.id===u.id?u:tile));
-    setEditingTile(null);setScreen(SCREENS.TILES);
-  },[editingTile,tiles,pTiles]);
+  const handleSaveEdit = async () => {
+  if(!editingTile?.name.trim()) return;
+
+  const u:Tile = {
+    ...editingTile,
+    images: editingTile.images || (editingTile.image ? [editingTile.image] : [])
+  };
+
+  const { error } = await supabase
+    .from("tiles")
+    .update({
+      name: u.name,
+      category: u.category,
+      format: u.format,
+      description: u.description,
+      images: u.images
+    })
+    .eq("id", u.id);
+
+  if(!error){
+    fetchTiles();
+    setEditingTile(null);
+    setScreen(SCREENS.TILES);
+  }
+};
 
   const deleteTile = async (id:number) => {
   await supabase
