@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useCallback, useEffect } from "react";
+import { createClient } from "@supabase/supabase-js";
 import { Search, Heart, Phone, MessageCircle, X, Plus, Menu, ChevronRight, Edit2, Check, Images, ChevronLeft, ZoomIn, Moon, Sun, Globe, Instagram, Facebook, LogOut, Save, ShieldCheck, UserPlus, Lock } from "lucide-react";
 
 const SUPABASE_URL = "https://byojmbdzrnkkfgtxeapd.supabase.co";
