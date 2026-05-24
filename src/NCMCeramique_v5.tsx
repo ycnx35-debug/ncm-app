@@ -263,14 +263,28 @@ const TileCard=React.memo(({tile,isFav,onToggleFav,onOpen,brand,t,dark}:TileCard
 });
 
 export default function App(){
-  const [tiles,setTiles]=useState<Tile[]>(()=>safeStorage.get("ncm_tiles",INITIAL_TILES) as Tile[]);
+  const [tiles,setTiles]=useState<Tile[]>([]);
   const [formats,setFormats]=useState<string[]>(()=>safeStorage.get("ncm_formats",DEFAULT_FORMATS) as string[]);
   const [categories,setCategories]=useState<string[]>(()=>safeStorage.get("ncm_categories",DEFAULT_CATEGORIES) as string[]);
   const [links,setLinks]=useState(()=>safeStorage.get("ncm_links",DEFAULT_LINKS) as typeof DEFAULT_LINKS);
   const [accounts,setAccounts]=useState<Account[]>(()=>safeStorage.get("ncm_accounts",DEFAULT_ACCOUNTS) as Account[]);
+  const fetchTiles = async () => {
+  const { data, error } = await supabase
+    .from("tiles")
+    .select("*");
+
+  console.log("DATA:", data);
+  console.log("ERROR:", error);
+
+  if (!error && data) {
+    setTiles(data);
+  }
+};
+
   const [dark,setDark]=useState<boolean>(()=>safeStorage.get("ncm_dark",true) as boolean);
   const [lang,setLang]=useState<string>(()=>safeStorage.get("ncm_lang","ar") as string);
   const t=TRANSLATIONS[lang as keyof typeof TRANSLATIONS]||TRANSLATIONS.ar;
+  
 
   const [favorites,setFavorites]=useState<number[]>([]);
   const [search,setSearch]=useState("");
@@ -301,7 +315,9 @@ export default function App(){
 
   useEffect(()=>{safeStorage.set("ncm_dark",dark);},[dark]);
   useEffect(()=>{safeStorage.set("ncm_lang",lang);},[lang]);
-
+  useEffect(() => {
+  fetchTiles();
+ }, []);
   const bg=dark?"bg-black":"bg-gray-50";
   const hdr=dark?"bg-black/95 border-zinc-800":"bg-white/95 border-gray-200";
   const cardCls=dark?"bg-zinc-950 border-zinc-800":"bg-white border-gray-200";
