@@ -335,16 +335,6 @@ const pLinks = async (v:any) => {
 };
  const pAccounts=useCallback((v:Account[])=>{setAccounts(v);safeStorage.set("ncm_accounts",v);},[]);
 
-const fetchTiles = async () => {
-  const { data, error } = await supabase
-    .from("tiles")
-    .select("*");
-
-  if (!error && data) {
-    setTiles(data);
-  }
-};
-
 const fetchSettings = async () => {
   const { data } = await supabase
     .from("settings")
